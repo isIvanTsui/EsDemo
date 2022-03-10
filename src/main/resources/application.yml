@@ -1,0 +1,26 @@
+sqlite:
+  dbpath: src\main\resources\mcdex_raw.db
+  indexpath: src\main\resources\index
+  key: 123456
+
+
+spring:
+  datasource:
+    dynamic:
+      datasource:
+        # ?????
+        master:
+          url: jdbc:p6spy:sqlite:${sqlite.dbpath}?key=${sqlite.key}
+          driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+#Elasticsearch???
+es:
+  ip: 127.0.0.1
+  port: 9200
+logging:
+  level: debug
+  level.com.dalianpai: debug
+  file:
+    path: logs:/
+server:
+  port: 10086
+

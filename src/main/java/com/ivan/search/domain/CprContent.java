@@ -6,41 +6,47 @@ import lombok.Data;
 
 import java.io.Serializable;
 
+
 /**
- * 
- * @TableName cpr_content
+ * 内容 实体
+ *
+ * @author cuiyingfan
+ * @date 2022/03/03
  */
-@TableName(value ="cpr_content")
+@TableName(value = "cpr_content")
 @Data
 public class CprContent implements Serializable {
-    /**
-     * 
-     */
-    private Object cprid;
 
     /**
-     * 
+     * cprId
      */
+    @TableField("cprid")
+    private Integer cprId;
+
+    /**
+     * cpr名字
+     */
+    @TableField("cpr_phname")
     private String cprPhname;
 
     /**
-     * 
+     * cpr序列
      */
-    private Object cprSeqnum;
+    @TableField("cpr_seqnum")
+    private Integer cprSeqnum;
 
     /**
-     * 
+     * cpr序列2
      */
-    private Object cprSeqnum2;
+    @TableField("cpr_seqnum2")
+    private Integer cprSeqnumTwo;
 
     /**
-     * 
+     * cpr内容
      */
+    @TableField(value = "cpr_content")
     private String cprContent;
 
     @TableField(exist = false)
-    private Float score;
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -1777781502377203442L;
 }

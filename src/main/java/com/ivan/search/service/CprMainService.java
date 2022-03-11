@@ -28,7 +28,7 @@ public class CprMainService extends ServiceImpl<CprMainMapper, CprMain>
      * @return {@link List}<{@link CprVo}>
      */
     public List<CprVo> listCpr() {
-        return cprMapper.listCpr();
+        return cprMapper.getDrugs();
     }
 }
 

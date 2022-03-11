@@ -1,18 +1,17 @@
 sqlite:
   dbpath: src\main\resources\mcdex_raw.db
   indexpath: src\main\resources\index
-  key: 123456
 
 
 spring:
   datasource:
     dynamic:
       datasource:
-        # ?????
+        # 主数据库源
         master:
-          url: jdbc:p6spy:sqlite:${sqlite.dbpath}?key=${sqlite.key}
+          url: jdbc:p6spy:sqlite:${sqlite.dbpath}
           driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-#Elasticsearch???
+#Elasticsearch配置
 es:
   ip: 127.0.0.1
   port: 9200

@@ -10,13 +10,7 @@ import java.util.List;
  * @Entity generator.domain.CprMain
  */
 public interface CprMainMapper extends BaseMapper<CprMain> {
-
-    /**
-     * 获取所有cpr
-     *
-     * @return {@link List}<{@link CprVo}>
-     */
-    List<CprVo> listCpr();
+    List<CprVo> getDrugs();
 }
 
 

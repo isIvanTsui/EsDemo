@@ -2,87 +2,34 @@ package com.ivan.search.vo;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
- *
- *
  * @author cuiyingfan
  * @date 2022/02/18
  */
 @Data
 public class CprVo {
-    private Object cprid;
+    private Integer cid;
 
     /**
-     *
+     * 标题
      */
-    private Object genid;
+    private String title;
 
     /**
-     *
+     * 排序码
      */
-    private Object drugNameid;
+    private Integer sortCode;
 
     /**
-     *
-     */
-    private String cprTitle;
-
-    /**
-     *
-     */
-    private String firstCode;
-
-    /**
-     *
-     */
-    private Object isWarndrug;
-
-    /**
-     *
-     */
-    private Object sortcode;
-
-    /**
-     *
-     */
-    private String launchDate;
-
-    /**
-     *
-     */
-    private String cprEditTime;
-
-    /**
-     *
-     */
-    private String cprUpdateTime;
-
-    /**
-     *
+     * 搜索关键字
      */
     private String searchName;
 
-    private String cprPhname;
-
     /**
-     *
+     * 内容
      */
-    private Object cprSeqnum;
+    private List<Content> contents;
 
-    /**
-     *
-     */
-    private Object cprSeqnum2;
-
-    /**
-     *
-     */
-    private String cprContent;
-
-    private Float score;
-
-    /**
-     * 最佳摘要
-     */
-    private String bestFragment;
 }

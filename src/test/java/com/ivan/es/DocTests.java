@@ -76,7 +76,7 @@ public class DocTests {
         users.add(new User(8, "古天乐", 33));
         BulkRequest request = new BulkRequest();
         for (User user : users) {
-            request.add(new IndexRequest("ivan").id(user.getUid() + "")
+            request.add(new IndexRequest("user").id(user.getUid() + "")
                     .source(JSONUtil.toJsonStr(user), XContentType.JSON));
         }
         BulkResponse responses = client.bulk(request, RequestOptions.DEFAULT);
@@ -141,7 +141,7 @@ public class DocTests {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         // (1)查询条件 使用QueryBuilders工具类创建
         // 精确查询
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("name.keyword", "张学友");
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("name.keyword", "周杰伦");
         //        // 匹配查询
         //        MatchAllQueryBuilder matchAllQueryBuilder = QueryBuilders.matchAllQuery();
         // (2)其他<可有可无>：（可以参考 SearchSourceBuilder 的字段部分）

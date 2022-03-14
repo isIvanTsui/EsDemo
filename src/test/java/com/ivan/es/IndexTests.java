@@ -1,17 +1,21 @@
 package com.ivan.es;
 
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * 索引的CRUD
@@ -53,5 +57,22 @@ public class IndexTests {
         AcknowledgedResponse response = client.indices().delete(new DeleteIndexRequest("ivan"), RequestOptions.DEFAULT);
         System.out.println("删除成功:" + response.isAcknowledged());
         System.out.println(response);
+    }
+
+    @Test
+    public void add() throws IOException {
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+        builder.startObject();
+        {
+            builder.field("user", "kimchy");
+            builder.timeField("postDate", new Date());
+            builder.field("message", "trying out Elasticsearch");
+            builder.field("analyzer", "ik_max_word");
+        }
+        builder.endObject();
+        IndexRequest request = new IndexRequest("posts1");
+        request.id("1");
+        request.source(builder);
+        client.index(request, RequestOptions.DEFAULT);
     }
 }

@@ -1,7 +1,7 @@
 package com.ivan.es;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.ivan.search.domain.User;
 import com.ivan.search.mapper.CprMainMapper;
 import com.ivan.search.vo.Content;
 import com.ivan.search.vo.CprVo;
@@ -11,10 +11,14 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.replication.ReplicationRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.PutMappingRequest;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -22,6 +26,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,11 +53,13 @@ public class FullTextSearchIndex {
     private CprMainMapper cprMainMapper;
 
     /**
-     * 创建全文搜索索引
+     * 添加索引
      */
     @Test
-    public void createFullTextSearchIndex() throws IOException {
+    public void addDoc() throws IOException {
+        //查询出来是一个1对多的结构
         List<CprVo> drugs = cprMainMapper.getDrugs();
+        //将它转换为我们需要的结构
         ArrayList<SearchOne> list = new ArrayList<>();
         for (CprVo drug : drugs) {
             SearchOne searchOne = new SearchOne(drug.getCid(), drug.getTitle(), drug.getSortCode(), drug.getSearchName());
@@ -74,38 +81,130 @@ public class FullTextSearchIndex {
     }
 
     /**
+     * 创建索引映射
+     * 自定义创建索引
+     *
+     * @throws IOException ioexception
+     */
+    @Test
+    public void createIndexMapping() throws IOException {
+        XContentBuilder builder = XContentFactory.jsonBuilder()
+                .startObject()
+                .startObject("properties")
+                /*cid字段*/
+                .startObject("cid")
+                .field("type", "long")
+                .field("store", true)
+                .endObject()
+
+                /*title字段*/
+                .startObject("title")
+                //字段类型
+                .field("type", "text")
+                //是否存储
+                .field("store", true)
+                //插入时分词
+                .field("analyzer", "ik_smart")
+                //搜索时分词
+                .field("search_analyzer", "ik_max_word")
+                .endObject()
+
+                /*contents 字段*/
+                .startObject("contents")
+                .field("type", "text")
+                .field("store", true)
+                .field("analyzer", "ik_smart")
+                .field("search_analyzer", "ik_max_word")
+                .endObject()
+
+                //sortCode字段
+                .startObject("sortCode")
+                .field("type", "long")
+                .field("store", true)
+                .endObject()
+
+                /*searchName 字段*/
+                .startObject("searchName")
+                .field("type", "text")
+                .field("store", true)
+                .field("analyzer", "ik_smart")
+                .field("search_analyzer", "ik_max_word")
+                .endObject()
+
+                .endObject()
+                .endObject();
+        AcknowledgedResponse response = client.indices().putMapping(new PutMappingRequest("ivan").source(builder), RequestOptions.DEFAULT);
+        System.out.println(response.isAcknowledged());
+        System.out.println(response);
+    }
+
+    /**
      * 完整测试搜索
      */
     @Test
     public void FullTestSearch() throws IOException {
-        // 1.创建查询请求对象
-        SearchRequest searchRequest = new SearchRequest();
-        // 2.构建搜索条件
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // (1)查询条件 使用QueryBuilders工具类创建
-        // 精确查询
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("title.keyword", "大柴胡成方");
-        //        // 匹配查询
-        //        MatchAllQueryBuilder matchAllQueryBuilder = QueryBuilders.matchAllQuery();
-        // (2)其他<可有可无>：（可以参考 SearchSourceBuilder 的字段部分）
-        // 设置高亮
-        searchSourceBuilder.highlighter(new HighlightBuilder());
-        //        // 分页
-        //        searchSourceBuilder.from();
-        //        searchSourceBuilder.size();
-        searchSourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
-        // (3)条件投入
-        searchSourceBuilder.query(termQueryBuilder);
-        // 3.添加条件到请求
-        searchRequest.source(searchSourceBuilder);
-        // 4.客户端查询请求
-        SearchResponse search = client.search(searchRequest, RequestOptions.DEFAULT);
-        // 5.查看返回结果
-        SearchHits hits = search.getHits();
-        System.out.println(JSONUtil.toJsonStr(hits));
-        System.out.println("=======================");
-        for (SearchHit documentFields : hits.getHits()) {
-            System.out.println(documentFields.getSourceAsMap());
+        String index = "ivan";
+        String keyword = "方";
+        // 搜索请求
+        SearchRequest searchRequest;
+        if (StrUtil.isEmpty(index)) {
+            searchRequest = new SearchRequest();
+        } else {
+            searchRequest = new SearchRequest(index);
         }
+        // 条件构造
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 第几页
+        searchSourceBuilder.from(0);
+        // 每页多少条数据
+        searchSourceBuilder.size(1000);
+        // 配置高亮
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field("title").field("contents");
+        highlightBuilder.preTags("<span style='color:red'>");
+        highlightBuilder.postTags("</span>");
+        searchSourceBuilder.highlighter(highlightBuilder);
+        // 精确查询
+//        QueryBuilders.termQuery();
+        // 匹配所有
+//        QueryBuilders.matchAllQuery();
+        // 最细粒度划分：ik_max_word，最粗粒度划分：ik_smart
+        searchSourceBuilder.query(QueryBuilders.multiMatchQuery(keyword, "title", "contents").analyzer("ik_max_word"));
+//        searchSourceBuilder.query(QueryBuilders.matchQuery("content", keyWord));
+        searchSourceBuilder.timeout(TimeValue.timeValueSeconds(10));
+
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (SearchHit searchHit : searchResponse.getHits().getHits()) {
+            Map<String, HighlightField> highlightFieldMap = searchHit.getHighlightFields();
+            HighlightField title = highlightFieldMap.get("title");
+            HighlightField description = highlightFieldMap.get("contents");
+            // 原来的结果
+            Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+            // 解析高亮字段，替换掉原来的字段
+            if (title != null) {
+                Text[] fragments = title.getFragments();
+                StringBuilder n_title = new StringBuilder();
+                for (Text text : fragments) {
+                    n_title.append(text);
+                }
+                sourceMap.put("title", n_title.toString());
+            }
+            if (description != null) {
+                Text[] fragments = description.getFragments();
+                StringBuilder n_description = new StringBuilder();
+                for (Text text : fragments) {
+                    n_description.append(text);
+                }
+                sourceMap.put("contents", n_description.toString());
+            }
+            results.add(sourceMap);
+        }
+        System.out.println(results);
     }
+
+
 }

@@ -14,7 +14,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -53,41 +56,23 @@ public class FullTextSearchIndex {
     private CprMainMapper cprMainMapper;
 
     /**
-     * 添加索引
-     */
-    @Test
-    public void addDoc() throws IOException {
-        //查询出来是一个1对多的结构
-        List<CprVo> drugs = cprMainMapper.getDrugs();
-        //将它转换为我们需要的结构
-        ArrayList<SearchOne> list = new ArrayList<>();
-        for (CprVo drug : drugs) {
-            SearchOne searchOne = new SearchOne(drug.getCid(), drug.getTitle(), drug.getSortCode(), drug.getSearchName());
-            StringBuilder builder = new StringBuilder();
-            for (Content content : drug.getContents()) {
-                builder.append(content.getSubtitle() + content.getContent());
-            }
-            searchOne.setContents(builder.toString());
-            list.add(searchOne);
-        }
-        BulkRequest request = new BulkRequest();
-        for (SearchOne one : list) {
-            request.add(new IndexRequest("ivan").id(one.getCid() + "")
-                    .source(JSONUtil.toJsonStr(one), XContentType.JSON));
-        }
-        BulkResponse responses = client.bulk(request, RequestOptions.DEFAULT);
-        System.out.println(responses.status());
-        System.out.println(responses);
-    }
-
-    /**
      * 创建索引映射
      * 自定义创建索引
      *
      * @throws IOException ioexception
      */
     @Test
-    public void createIndexMapping() throws IOException {
+    public void createIndexAndMapping() throws IOException {
+        //先创建索引
+        CreateIndexRequest request = new CreateIndexRequest("ivan");
+        request.settings(Settings.builder().put("index.number_of_shards", 3) // 分片数
+                .put("index.number_of_replicas", 2) // 副本数
+                .put("analysis.analyzer.default.tokenizer", "ik_smart") // 默认分词器
+        );
+        CreateIndexResponse re = client.indices().create(request, RequestOptions.DEFAULT);
+        System.out.println("索引创建成功了吗：" + re.isAcknowledged());
+
+        //再创建文档映射
         XContentBuilder builder = XContentFactory.jsonBuilder()
                 .startObject()
                 .startObject("properties")
@@ -134,8 +119,35 @@ public class FullTextSearchIndex {
                 .endObject()
                 .endObject();
         AcknowledgedResponse response = client.indices().putMapping(new PutMappingRequest("ivan").source(builder), RequestOptions.DEFAULT);
-        System.out.println(response.isAcknowledged());
-        System.out.println(response);
+        System.out.println("文档映射创建成功了吗：" + response.isAcknowledged());
+    }
+
+    /**
+     * 添加文档
+     */
+    @Test
+    public void addDoc() throws IOException {
+        //查询出来是一个1对多的结构
+        List<CprVo> drugs = cprMainMapper.getDrugs();
+        //将它转换为我们需要的结构
+        ArrayList<SearchOne> list = new ArrayList<>();
+        for (CprVo drug : drugs) {
+            SearchOne searchOne = new SearchOne(drug.getCid(), drug.getTitle(), drug.getSortCode(), drug.getSearchName());
+            StringBuilder builder = new StringBuilder();
+            for (Content content : drug.getContents()) {
+                builder.append(content.getSubtitle() + content.getContent());
+            }
+            searchOne.setContents(builder.toString());
+            list.add(searchOne);
+        }
+        BulkRequest request = new BulkRequest();
+        for (SearchOne one : list) {
+            request.add(new IndexRequest("ivan").id(one.getCid() + "")
+                    .source(JSONUtil.toJsonStr(one), XContentType.JSON));
+        }
+        BulkResponse responses = client.bulk(request, RequestOptions.DEFAULT);
+        System.out.println(responses.status());
+        System.out.println(responses);
     }
 
     /**
@@ -144,7 +156,7 @@ public class FullTextSearchIndex {
     @Test
     public void FullTestSearch() throws IOException {
         String index = "ivan";
-        String keyword = "方";
+        String keyword = "柴胡";
         // 搜索请求
         SearchRequest searchRequest;
         if (StrUtil.isEmpty(index)) {

@@ -129,40 +129,4 @@ public class DocTests {
         System.out.println(response.status());
         System.out.println(response);
     }
-
-    /**
-     * 全文检索
-     */
-    @Test
-    public void fullSearch() throws IOException {
-        // 1.创建查询请求对象
-        SearchRequest searchRequest = new SearchRequest();
-        // 2.构建搜索条件
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // (1)查询条件 使用QueryBuilders工具类创建
-        // 精确查询
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("name.keyword", "周杰伦");
-        //        // 匹配查询
-        //        MatchAllQueryBuilder matchAllQueryBuilder = QueryBuilders.matchAllQuery();
-        // (2)其他<可有可无>：（可以参考 SearchSourceBuilder 的字段部分）
-        // 设置高亮
-        searchSourceBuilder.highlighter(new HighlightBuilder());
-        //        // 分页
-        //        searchSourceBuilder.from();
-        //        searchSourceBuilder.size();
-        searchSourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
-        // (3)条件投入
-        searchSourceBuilder.query(termQueryBuilder);
-        // 3.添加条件到请求
-        searchRequest.source(searchSourceBuilder);
-        // 4.客户端查询请求
-        SearchResponse search = client.search(searchRequest, RequestOptions.DEFAULT);
-        // 5.查看返回结果
-        SearchHits hits = search.getHits();
-        System.out.println(JSONUtil.toJsonStr(hits));
-        System.out.println("=======================");
-        for (SearchHit documentFields : hits.getHits()) {
-            System.out.println(documentFields.getSourceAsMap());
-        }
-    }
 }

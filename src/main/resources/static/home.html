@@ -7,7 +7,11 @@
 <script src="https://s3.pstatp.com/cdn/expire-1-M/jquery/3.3.1/jquery.min.js"></script>
 <body>
 <h1 align="center">全文检索测试</h1>
+<div align="center">
+    <input type="button" value="建索引和添加文档" id="createIndex">
+</div>
 <div >
+    <br>
     <input type="text" placeholder="请输入搜索关键字" id="keyword">
     <input type="button" value="搜索" id="search">
 </div>
@@ -17,20 +21,59 @@
 <script>
     $("#search").click(function (a) {
         var keyword = $("#keyword").val();
+        if (keyword == '') {
+            return
+        }
         $.post("search", { "keyword": keyword },
             function(result){
                 $("#div1").children().remove()
                 result.forEach(element => {
                     var addHtml = '<div style="float: left;border: 1px solid red;margin-left: 20px;margin-top: 20px;" id="div2">'
-                        + '<div>'+ "标题：" + element.cprTitle +'</div>' + '</br>'
-                        + '<div>'+ "内容：" + element.cprContent +'</div>' + '</br>'
-                        + '<div>'+ "最佳摘要：" + element.bestFragment +'</div>' + '</br>'
-                        + '<div>'+ "得分：" + element.score +'</div>'
+                        + '<div>'+ "标题：" + element.title +'</div>' + '</br>'
+                        + '<div>'+ "内容：" + element.contents +'</div>' + '</br>'
+                        + '<div>'+ "搜索字段：" + element.searchName +'</div>' + '</br>'
+                        + '<div>'+ "排序码：" + element.sortCode +'</div>'
                         + '</div>';
                     $("#div1").append(addHtml);
                 })
             });
     })
+    $(function () {
+        $.post("search", { "keyword": "柴胡" },
+            function(result){
+                $("#div1").children().remove()
+                result.forEach(element => {
+                    var addHtml = '<div style="float: left;border: 1px solid red;margin-left: 20px;margin-top: 20px;" id="div2">'
+                        + '<div>'+ "标题：" + element.title +'</div>' + '</br>'
+                        + '<div>'+ "内容：" + element.contents +'</div>' + '</br>'
+                        + '<div>'+ "搜索字段：" + element.searchName +'</div>' + '</br>'
+                        + '<div>'+ "排序码：" + element.sortCode +'</div>'
+                        + '</div>';
+                    $("#div1").append(addHtml);
+                })
+            });
+    })
+
+    $("#createIndex").click(function (a) {
+        $.post("addIndexAndDoc", { },
+            function(result){
+                $.post("search", { "keyword": "柴胡" },
+                    function(result){
+                        $("#div1").children().remove()
+                        result.forEach(element => {
+                            var addHtml = '<div style="float: left;border: 1px solid red;margin-left: 20px;margin-top: 20px;" id="div2">'
+                                + '<div>'+ "标题：" + element.title +'</div>' + '</br>'
+                                + '<div>'+ "内容：" + element.contents +'</div>' + '</br>'
+                                + '<div>'+ "搜索字段：" + element.searchName +'</div>' + '</br>'
+                                + '<div>'+ "排序码：" + element.sortCode +'</div>'
+                                + '</div>';
+                            $("#div1").append(addHtml);
+                        })
+                    });
+            });
+    })
+
+
 </script>
 </body>
 </html>

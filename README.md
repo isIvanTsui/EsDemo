@@ -12,7 +12,7 @@
 
 ## 如何启动
 
-1. 先启动自己本地的`Elasticsearch`引擎
+1. <span style="color:red">先启动自己本地的`Elasticsearch`引擎</span>
 2. 把项目拉取下来
 3. 用`idea`打开，自动编译下载完依赖后直接启动即可；无需修改任何配置
 

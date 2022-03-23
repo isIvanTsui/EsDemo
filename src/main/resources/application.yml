@@ -11,13 +11,17 @@ spring:
         master:
           url: jdbc:p6spy:sqlite:${sqlite.dbpath}
           driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+
 #Elasticsearch配置
 es:
   ip: 127.0.0.1
   port: 9200
-logging:
-  level: debug
-  level.com.dalianpai: debug
-  file:
-    path: logs:/
 
+logging:
+  level:
+    root=INFO:
+  config: classpath:logback-spring.xml
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
